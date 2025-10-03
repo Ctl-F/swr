@@ -122,6 +122,7 @@ pub const Pixel_PID8A8D16 = packed struct {
 
 pub const PipelineInfo = struct {
     pixel_format: Format,
+    scale: u8,
 };
 
 pub const Canvas = struct {
@@ -132,7 +133,6 @@ pub const Canvas = struct {
 pub const AppInfo = struct {
     title: [*c]const u8,
     size: Dim,
-    scale: u8,
 };
 
 pub const HostError = error{
@@ -155,6 +155,11 @@ pub fn create_pipeline(comptime pipelineInfo: PipelineInfo) type {
         @compileError("Pallatized pixel formats are not yet supported");
     }
 
+    switch (pipelineInfo.scale) {
+        1, 2, 4, 8 => {},
+        else => @compileError("Invalid scale factor. Value must be 1, 2, 4, or 8"),
+    }
+
     return struct {
         const This = @This();
         pub const Pixel = FramebufferType;
@@ -175,7 +180,7 @@ pub fn create_pipeline(comptime pipelineInfo: PipelineInfo) type {
             }
             errdefer sdl.SDL_Quit();
 
-            const window = sdl.SDL_CreateWindow(info.title, @intCast(info.size.hor * info.scale), @intCast(info.size.vert * info.scale), 0);
+            const window = sdl.SDL_CreateWindow(info.title, @intCast(info.size.hor * pipelineInfo.scale), @intCast(info.size.vert * pipelineInfo.scale), 0);
             if (window == null) {
                 return HostError.CouldNotCreateWindow;
             }
@@ -235,6 +240,20 @@ pub fn create_pipeline(comptime pipelineInfo: PipelineInfo) type {
                     else => {},
                 }
             }
+        }
+
+        fn convert_to_rgba32(source: u32) u32 {
+            return source;
+        }
+        fn convert_to_bgra32(source: u32) u32 {
+            const value = @Vector(4, u8){ @as([*]u8) }
+        }
+
+        fn blit_upscale(sourceSurface: ?*sdl.SDL_Surface, destSurface: ?*sdl.SDL_Surface) void {
+            std.debug.assert(sourceSurface != null);
+            std.debug.assert(destSurface != null);
+
+            sourceSurface.?.pixels
         }
 
         pub fn refresh(this: This) void {

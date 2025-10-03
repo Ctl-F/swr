@@ -88,10 +88,10 @@ pub fn main() !void {
             .hor = 160,
             .vert = 120,
         },
-        .scale = 1,
     };
     const pipelineInfo = swr.PipelineInfo{
         .pixel_format = .RGBA32,
+        .scale = 4,
     };
 
     var GPA = std.heap.DebugAllocator(.{}).init;
