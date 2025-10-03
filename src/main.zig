@@ -78,15 +78,17 @@ fn v_handle_mouse_move(ctx: ?*anyopaque, x: f32, y: f32, xrel: f32, yrel: f32) v
     }
     unreachable;
 }
-
+// TODO: Renderer thread setup and flags
+// TODO: Composite modes on pipeline (dst hint src hint)
+// TODO: Write custom hand-rolled upscaler(leveraging zig comptime to generate specialized versions of it)
 pub fn main() !void {
     const appInfo = swr.AppInfo{
         .title = "Hello swr",
         .size = .{
-            .width = 160,
-            .height = 120,
+            .hor = 160,
+            .vert = 120,
         },
-        .scale = 4,
+        .scale = 1,
     };
     const pipelineInfo = swr.PipelineInfo{
         .pixel_format = .RGBA32,
@@ -120,15 +122,15 @@ pub fn main() !void {
         var new_x: i64 = @as(i64, @intCast(@as(i32, @intCast(context.x)) + h_vel));
         var new_y: i64 = @as(i64, @intCast(@as(i32, @intCast(context.y)) + v_vel));
 
-        new_x = std.math.clamp(new_x, 0, @as(i64, @intCast(pipeline.framebuffer.size.width - 10)));
-        new_y = std.math.clamp(new_y, 0, @as(i64, @intCast(pipeline.framebuffer.size.height - 10)));
+        new_x = std.math.clamp(new_x, 0, @as(i64, @intCast(pipeline.framebuffer.size.hor - 10)));
+        new_y = std.math.clamp(new_y, 0, @as(i64, @intCast(pipeline.framebuffer.size.vert - 10)));
 
         context.x = @as(u32, @intCast(new_x));
         context.y = @as(u32, @intCast(new_y));
 
         const fb = pipeline.get_framebuffer();
 
-        const split_index = fb.index(pipeline.framebuffer.size.width, pipeline.framebuffer.size.height / 2 + pipeline.framebuffer.size.height / 4);
+        const split_index = fb.index(pipeline.framebuffer.size.hor, pipeline.framebuffer.size.vert / 2 + pipeline.framebuffer.size.vert / 4);
         const sky = fb.buffer[0..split_index];
         const ground = fb.buffer[split_index..];
 
